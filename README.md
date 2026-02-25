@@ -28,7 +28,7 @@ Shorten a URL:
 ```bash
 curl -X POST http://localhost:8080/shorten \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com"}'
+  -d '{"user":"user's name", "url":"https://example.com"}'
 ```
 
 Redirect:
@@ -40,17 +40,8 @@ curl -I http://localhost:8080/<short-code>
 
 - `v1/` - First implementation (minimal, focused on core workflow)
 - `v2/` - Next iteration (planned)
-- `docs/` - Cross-version documentation (optional)
 
 ## Roadmap
 
 - v2: persistent storage, config via env, structured logging, tests
 - v3: rate limiting, analytics, caching, expiry/TTL, docker compose, etc.
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## License
-
-Add a license file (MIT/Apache-2.0/etc.) and reference it here.
