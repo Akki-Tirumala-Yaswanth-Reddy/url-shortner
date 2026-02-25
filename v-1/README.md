@@ -30,12 +30,15 @@ Creates a short URL.
 
 **Request**
 ```json
-{ "url": "https://example.com" }
+{
+  "user": "user's name"
+  "url": "https://example.com"
+}
 ```
 
 **Response**
 ```json
-{ "short_url": "http://localhost:8080/123" }
+{ "url": "http://localhost:8080/123" }
 ```
 
 ### GET /redirect/{extra}
@@ -48,7 +51,7 @@ Redirects to the original URL.
 ## Implementation notes
 
 - Storage: in-memory map (resets on restart)
-- ID generation: A counter is used to keep of track of 
+- ID generation: A counter is incremented and used as a short string to create the shortened url.
 - Validation: (what you validate, what you don’t)
 
 ## Known limitations
