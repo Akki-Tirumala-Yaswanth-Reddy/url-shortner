@@ -1,0 +1,37 @@
+@baseUrl = http://localhost:8080
+
+### Create short URL (success)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "Yaswanth",
+  "url": "https://amazon.jp"
+}
+
+### Create short URL (validation: missing user)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "",
+  "url": "https://example.com"
+}
+
+### Create short URL (validation: missing url)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "alice",
+  "url": ""
+}
+
+### Redirect (replace 1 with actual short_code)
+GET {{baseUrl}}/redirect/4
+
+### Redirect (invalid short_code format)
+GET {{baseUrl}}/redirect/abc
+
+### Redirect (not found)
+GET {{baseUrl}}/redirect/999999
