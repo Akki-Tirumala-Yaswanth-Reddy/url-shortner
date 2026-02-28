@@ -12,11 +12,17 @@ import (
 var DB *pgxpool.Pool
 
 func InitDB() error {
-    if err := godotenv.Load(".env"); err != nil {
-        return fmt.Errorf("failed to load .env: %w", err)
-    }
+    
 
     dbURL := os.Getenv("DATABASE_URL")
+
+    if dbURL == "" {
+        if err := godotenv.Load(".env"); err != nil {
+            return fmt.Errorf("failed to load .env: %w", err)
+        }
+        dbURL = os.Getenv("DATABASE_URL")
+    }
+
     if dbURL == "" {
         return fmt.Errorf("DATABASE_URL is empty")
     }

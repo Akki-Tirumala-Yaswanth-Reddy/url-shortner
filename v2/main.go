@@ -1,11 +1,12 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "url_shortner/m/v2/db"
-    "url_shortner/m/v2/handlers"
-    "url_shortner/m/v2/middleware"
+	"log"
+	"net/http"
+	"os"
+	"url_shortner/m/v2/db"
+	"url_shortner/m/v2/handlers"
+	"url_shortner/m/v2/middleware"
 )
 
 func main() {
@@ -18,6 +19,11 @@ func main() {
     mux.Handle("POST /create", middleware.LoggingMiddleware(http.HandlerFunc(handlers.CreateShortUrl)))
     mux.Handle("GET /redirect/{short_code}", middleware.LoggingMiddleware(http.HandlerFunc(handlers.Redirect)))
 
+	port := os.Getenv("PORT")
+	if port == ""{
+		port = "8080"
+	}
+	address := ":" + port
     log.Println("Server running at: localhost:8080")
-    log.Fatal(http.ListenAndServe(":8080", mux))
+    log.Fatal(http.ListenAndServe(address, mux))
 }

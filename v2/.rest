@@ -28,7 +28,7 @@ Content-Type: application/json
 }
 
 ### Redirect (replace 1 with actual short_code)
-GET {{baseUrl}}/redirect/4
+GET {{baseUrl}}/redirect/1
 
 ### Redirect (invalid short_code format)
 GET {{baseUrl}}/redirect/abc
