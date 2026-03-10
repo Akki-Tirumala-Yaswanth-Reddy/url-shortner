@@ -24,6 +24,8 @@ Non-goals (for v2):
 
 ### Option 1 — run directly
 
+From the `v2/` directory:
+
 1. Start a PostgreSQL database and apply the schema:
    ```bash
    psql -U postgres -d url-shortner -f db/init.sql
@@ -34,7 +36,6 @@ Non-goals (for v2):
    ```
 3. Run the server:
    ```bash
-   cd v2
    go run .
    ```
 
