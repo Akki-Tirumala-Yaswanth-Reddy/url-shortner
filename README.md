@@ -7,8 +7,8 @@ This repository contains **multiple versions** of the same project to showcase d
 
 | Version | Status | Storage | Highlights | Docs |
 |--------:|:------:|:-------|:----------|:-----|
-| v1 | ✅ Done | In-memory (example) | Minimal working URL shortener | [v1 README](./v1/README.md) |
-| v2 | 🟡 Planned | TBD | Persistence + better validation | [v2 README](./v2/README.md) |
+| v1 | ✅ Done | In-memory | Minimal working URL shortener | [v1 README](./v1/README.md) |
+| v2 | ✅ Done | PostgreSQL | Persistent storage, Docker Compose, structured packages | [v2 README](./v2/README.md) |
 
 > Tip: Each version is intended to be **self-contained**. Read the version README for run steps and API.
 
@@ -26,22 +26,21 @@ go run .
 ### Example usage
 Shorten a URL:
 ```bash
-curl -X POST http://localhost:8080/shorten \
+curl -X POST http://localhost:8080/create \
   -H "Content-Type: application/json" \
-  -d '{"user":"user's name", "url":"https://example.com"}'
+  -d '{"user": "Alice", "url": "https://example.com"}'
 ```
 
-Redirect:
+Follow a redirect:
 ```bash
-curl -I http://localhost:8080/<short-code>
+curl -L http://localhost:8080/redirect/1
 ```
 
 ## Repo structure
 
-- `v1/` - First implementation (minimal, focused on core workflow)
-- `v2/` - Next iteration (planned)
+- `v1/` - First implementation (minimal, in-memory, focused on core workflow)
+- `v2/` - Second implementation (PostgreSQL-backed persistence, Docker Compose)
 
 ## Roadmap
 
-- v2: persistent storage, config via env, structured logging, tests
-- v3: rate limiting, analytics, caching, expiry/TTL, docker compose, etc.
+- v3: rate limiting, analytics, caching, expiry/TTL, etc.
