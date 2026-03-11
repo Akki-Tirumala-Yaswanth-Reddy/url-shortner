@@ -9,6 +9,7 @@ This repository contains **multiple versions** of the same project to showcase d
 |--------:|:------:|:-------|:----------|:-----|
 | v1 | ✅ Done | In-memory | Minimal working URL shortener | [v1 README](./v1/README.md) |
 | v2 | ✅ Done | PostgreSQL | Persistent storage, Docker Compose, structured packages | [v2 README](./v2/README.md) |
+| v3 | ✅ Done | PostgreSQL + Redis | Base62 short codes, Redis caching, restart/multi-instance safe | [v3 README](./v3/README.md) |
 
 > Tip: Each version is intended to be **self-contained**. Read the version README for run steps and API.
 
@@ -40,7 +41,8 @@ curl -L http://localhost:8080/redirect/1
 
 - `v1/` - First implementation (minimal, in-memory, focused on core workflow)
 - `v2/` - Second implementation (PostgreSQL-backed persistence, Docker Compose)
+- `v3/` - Third implementation (PostgreSQL + Redis caching, Base62 short codes, multi-instance safe)
 
 ## Roadmap
 
-- v3: rate limiting, analytics, caching, expiry/TTL, etc.
+- v4: rate limiting, analytics, TTL / link expiry, custom aliases, etc.
