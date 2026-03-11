@@ -6,8 +6,8 @@ v4 builds on v3 by adding **per-link click analytics** and **operational endpoin
 
 New in v4:
 - **Click tracking** — every redirect atomically increments `click_count` and sets `last_accessed_at` in PostgreSQL (no race conditions, survives restarts)
-- **Stats API** — `GET /api/v1/links/{short_code}/stats` returns per-link analytics
-- **Health endpoints** — `GET /healthz` (liveness) and `GET /readyz` (DB readiness)
+- **Stats API** — `GET /stats/{short_code}` returns per-link analytics
+- **Health endpoints** — `GET /healthCheck` (liveness) and `GET /readyCheck` (DB readiness)
 
 Non-goals (for v4):
 - Authentication / authorization
@@ -66,7 +66,7 @@ Redirects to the original URL. Atomically increments `click_count` and updates `
 - `302 Found` — redirect
 - `404 Not Found` — short code does not exist
 
-### GET /api/v1/links/{short_code}/stats
+### GET /stats/{short_code}
 Returns per-link analytics.
 
 **Response** `200`
@@ -83,10 +83,10 @@ Returns per-link analytics.
 - `404 Not Found` — short code does not exist
 - `500 Internal Server Error` — DB error
 
-### GET /healthz
+### GET /healthCheck
 Always returns `200 OK`.
 
-### GET /readyz
+### GET /readyCheck
 Pings the database. Returns `200 OK` if reachable, `503 Service Unavailable` otherwise.
 
 ## Example walkthrough
@@ -107,7 +107,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/redirect/1
 # → 302
 
 # 3. Fetch stats — click_count should be 3
-curl -s http://localhost:8080/api/v1/links/1/stats | python3 -m json.tool
+curl -s http://localhost:8080/stats/1 | python3 -m json.tool
 # {
 #     "short_code": "1",
 #     "original_url": "https://example.com",
@@ -117,8 +117,8 @@ curl -s http://localhost:8080/api/v1/links/1/stats | python3 -m json.tool
 # }
 
 # 4. Health checks
-curl -s http://localhost:8080/healthz   # → ok
-curl -s http://localhost:8080/readyz    # → ok
+curl -s http://localhost:8080/healthCheck   # → ok
+curl -s http://localhost:8080/readyCheck    # → ok
 ```
 
 ## Configuration
@@ -138,16 +138,23 @@ DATABASE_URL="postgres://postgres:postgres@localhost:5432/url-shortner?sslmode=d
 
 ## Implementation notes
 
-- **Storage**: PostgreSQL via `pgx/v5` connection pool. Schema: `urls(id BIGSERIAL PK, user_name TEXT, short_code TEXT UNIQUE, original_url TEXT, created_at TIMESTAMPTZ)`.
+- **Storage**: PostgreSQL via `pgx/v5` connection pool. Schema: `urls(id BIGSERIAL PK, user_name TEXT, short_code TEXT UNIQUE, original_url TEXT, created_at TIMESTAMPTZ, click_count BIGINT DEFAULT 0, last_accessed_at TIMESTAMPTZ NULL)`.
 - **Short-code generation**: On `POST /create` the handler inserts a row (without `short_code`), reads back the DB-generated `id` via `RETURNING id`, encodes it with Base62, and updates the row — all inside a single transaction.
 - **Base62 encoding**: Uses digits `0-9`, uppercase `A-Z`, lowercase `a-z` (62 characters). Produces short, URL-safe codes that grow slowly (e.g. id 1 → `1`, id 62 → `10`, id 238328 → `1000`).
 - **Validation**: `user` and `url` fields must be non-empty. Unknown JSON fields in the request body are rejected.
 - **Logging middleware**: Every request logs the HTTP method, URL path, and elapsed time.
 
-## Improvements over v2
+## Known limitations
 
-| v2 limitation | v3 fix |
+- **No URL format validation**: Any non-empty string is accepted as the destination URL.
+- **No TTL / link expiry**: Short URLs are permanent (the 24-hour Redis TTL only applies to the cache entry, not the underlying database record).
+- **No rate limiting**: The API accepts unlimited requests per client.
+- **No per-day / time-series analytics**: Only total click count and last-accessed timestamp are stored.
+
+## Improvements over v3
+
+| v3 limitation | v4 fix |
 |---------------|--------|
-| In-memory counter resets on restart, causing `409 Conflict` collisions | Short codes derived from DB sequence — always unique across restarts |
-| Not safe for multiple instances (counter is process-local) | All state lives in PostgreSQL; any number of instances can run concurrently |
-| Short codes are plain incrementing integers | Short codes are Base62-encoded — shorter and less predictable |
+| No analytics — click counts and redirect metrics are not tracked | Click tracking added — `click_count` incremented and `last_accessed_at` updated on every redirect |
+| No stats API | `GET /stats/{short_code}` returns per-link analytics (short code, original URL, click count, last accessed time) |
+| No health or readiness endpoints | `GET /healthCheck` (liveness) and `GET /readyCheck` (DB readiness) added for operational monitoring |
