@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/redis/go-redis/v9"
 )
 
 func CreateShortUrl(w http.ResponseWriter, r *http.Request) {
@@ -42,10 +43,10 @@ func CreateShortUrl(w http.ResponseWriter, r *http.Request) {
 
 	var id int64
 	insertQuery := `
-		INSERT INTO urls (user_name, original_url)
-		VALUES ($1, $2)
-		RETURNING id;
-	`
+        INSERT INTO urls (user_name, original_url)
+        VALUES ($1, $2)
+        RETURNING id;
+    `
 	if err := tx.QueryRow(ctx, insertQuery, req.User, req.Url).Scan(&id); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -77,7 +78,6 @@ func CreateShortUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Cache the new short code -> original URL mapping in Redis
 	if err := db.RDB.Set(ctx, "url:"+shortCode, req.Url, 24*time.Hour).Err(); err != nil {
 		log.Println("redis set:", err)
 	}
@@ -99,16 +99,47 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
+	cacheKey := "url:" + shortCode
 
-	// Atomic: increment click_count, set last_accessed_at, return original_url
-	var originalURL string
+	originalURL, err := db.RDB.Get(ctx, cacheKey).Result()
+	if err == nil {
+		updateOnlyQuery := `
+            UPDATE urls
+            SET click_count = click_count + 1,
+                last_accessed_at = now()
+            WHERE short_code = $1
+            RETURNING id;
+        `
+
+		var id int64
+		if err := db.DB.QueryRow(ctx, updateOnlyQuery, shortCode).Scan(&id); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				if delErr := db.RDB.Del(ctx, cacheKey).Err(); delErr != nil {
+					log.Println("redis del:", delErr)
+				}
+				http.Error(w, "url not found", http.StatusNotFound)
+				return
+			}
+			log.Println("redirect update metrics:", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		log.Println("redis get success: ", originalURL)
+		http.Redirect(w, r, originalURL, http.StatusFound)
+		return
+	}
+
+	if !errors.Is(err, redis.Nil) {
+		log.Println("redis get:", err)
+	}
+
 	query := `
-		UPDATE urls
-		SET click_count = click_count + 1,
-		    last_accessed_at = now()
-		WHERE short_code = $1
-		RETURNING original_url;
-	`
+        UPDATE urls
+        SET click_count = click_count + 1,
+            last_accessed_at = now()
+        WHERE short_code = $1
+        RETURNING original_url;
+    `
 	if err := db.DB.QueryRow(ctx, query, shortCode).Scan(&originalURL); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "url not found", http.StatusNotFound)
@@ -119,8 +150,7 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update Redis cache with the original URL
-	if err := db.RDB.Set(ctx, "url:"+shortCode, originalURL, 24*time.Hour).Err(); err != nil {
+	if err := db.RDB.Set(ctx, cacheKey, originalURL, 24*time.Hour).Err(); err != nil {
 		log.Println("redis set:", err)
 	}
 
@@ -137,10 +167,10 @@ func GetStats(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var stats models.StatsResponse
 	query := `
-		SELECT short_code, original_url, created_at, click_count, last_accessed_at
-		FROM urls
-		WHERE short_code = $1;
-	`
+        SELECT short_code, original_url, created_at, click_count, last_accessed_at
+        FROM urls
+        WHERE short_code = $1;
+    `
 	err := db.DB.QueryRow(ctx, query, shortCode).Scan(
 		&stats.ShortCode,
 		&stats.OriginalURL,
@@ -164,15 +194,15 @@ func GetStats(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Healthz(w http.ResponseWriter, r *http.Request) {
+func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok"))
 }
 
-func Readyz(w http.ResponseWriter, r *http.Request) {
+func ReadyCheck(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	if err := db.DB.Ping(ctx); err != nil {
-		log.Println("readyz: db ping failed:", err)
+		log.Println("ReadyCheck: db ping failed:", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		w.Write([]byte("db not ready"))
 		return

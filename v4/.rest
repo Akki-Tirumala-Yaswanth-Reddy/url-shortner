@@ -44,13 +44,7 @@ Content-Type: application/json
 ### REDIRECT (increments click_count)
 ### ──────────────────────────────────
 
-### Redirect - hit 1 (replace 1 with actual short_code)
-GET {{baseUrl}}/redirect/1
-
-### Redirect - hit 2
-GET {{baseUrl}}/redirect/1
-
-### Redirect - hit 3
+### Redirect (replace 1 with actual short_code)
 GET {{baseUrl}}/redirect/1
 
 ### Redirect (not found)
@@ -64,20 +58,20 @@ GET {{baseUrl}}/redirect/abc
 ### ──────────────────────────────────
 
 ### Get stats for short_code 1 (should show click_count=3 after above redirects)
-GET {{baseUrl}}/api/v1/links/1/stats
+GET {{baseUrl}}/stats/1
 
 ### Get stats for short_code 2
-GET {{baseUrl}}/api/v1/links/2/stats
+GET {{baseUrl}}/stats/2
 
 ### Get stats (not found)
-GET {{baseUrl}}/api/v1/links/999999/stats
+GET {{baseUrl}}/stats/2
 
 ### ──────────────────────────────────
 ### HEALTH CHECKS
 ### ──────────────────────────────────
 
 ### Liveness probe
-GET {{baseUrl}}/healthz
+GET {{baseUrl}}/healthCheck
 
 ### Readiness probe (pings DB)
-GET {{baseUrl}}/readyz
+GET {{baseUrl}}/readyCheck

@@ -23,9 +23,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("POST /create", middleware.LoggingMiddleware(http.HandlerFunc(handlers.CreateShortUrl)))
 	mux.Handle("GET /redirect/{short_code}", middleware.LoggingMiddleware(http.HandlerFunc(handlers.Redirect)))
-	mux.Handle("GET /api/v1/links/{short_code}/stats", middleware.LoggingMiddleware(http.HandlerFunc(handlers.GetStats)))
-	mux.Handle("GET /healthz", http.HandlerFunc(handlers.Healthz))
-	mux.Handle("GET /readyz", http.HandlerFunc(handlers.Readyz))
+	mux.Handle("GET /stats/{short_code}", middleware.LoggingMiddleware(http.HandlerFunc(handlers.GetStats)))
+	mux.Handle("GET /healthCheck", http.HandlerFunc(handlers.HealthCheck))
+	mux.Handle("GET /readyCheck", http.HandlerFunc(handlers.ReadyCheck))
 
 	port := os.Getenv("PORT")
 	if port == "" {
