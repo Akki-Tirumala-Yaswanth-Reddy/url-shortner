@@ -144,3 +144,13 @@ REDIS_URL="redis://localhost:6379"
 | In-memory counter resets on restart, causing `409 Conflict` collisions | Short codes derived from DB sequence — always unique across restarts |
 | Not safe for multiple instances (counter is process-local) | All state lives in PostgreSQL; any number of instances can run concurrently |
 | Short codes are plain incrementing integers | Short codes are Base62-encoded — shorter and less predictable |
+
+- **Notable improvement in latency**: Average latency dropped from 311.93ms to 7.85ms.
+
+- Benchmark of v2(without Redis) 
+
+<img src="withRedis.png" width=500>
+
+- Benchmark of v3(with Redis) 
+
+<img src="withoutRedis.png" width=500>
