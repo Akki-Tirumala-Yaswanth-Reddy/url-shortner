@@ -10,7 +10,6 @@ import (
 	"url_shortner/v5/helpers"
 	"url_shortner/v5/models"
 	"url_shortner/v5/analytics"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/redis/go-redis/v9"
