@@ -149,8 +149,8 @@ REDIS_URL="redis://localhost:6379"
 
 - Benchmark of v2(without Redis) 
 
-<img src="withRedis.png" width=500>
+<img src="withoutRedis.png" width=500>
 
 - Benchmark of v3(with Redis) 
 
-<img src="withoutRedis.png" width=500>
+<img src="withRedis.png" width=500>
