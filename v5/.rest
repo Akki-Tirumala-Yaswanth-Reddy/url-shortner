@@ -1,0 +1,77 @@
+@baseUrl = http://localhost:8080
+
+### ──────────────────────────────────
+### CREATE SHORT URLs
+### ──────────────────────────────────
+
+### Create short URL (success)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "Yaswanth",
+  "url": "https://example.com"
+}
+
+### Create short URL (second link)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "Yaswanth",
+  "url": "https://github.com"
+}
+
+### Create short URL (validation: missing user)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "",
+  "url": "https://example.com"
+}
+
+### Create short URL (validation: missing url)
+POST {{baseUrl}}/create
+Content-Type: application/json
+
+{
+  "user": "alice",
+  "url": ""
+}
+
+### ──────────────────────────────────
+### REDIRECT (increments click_count)
+### ──────────────────────────────────
+
+### Redirect (replace 1 with actual short_code)
+GET {{baseUrl}}/redirect/1
+
+### Redirect (not found)
+GET {{baseUrl}}/redirect/999999
+
+### Redirect (invalid short_code format)
+GET {{baseUrl}}/redirect/abc
+
+### ──────────────────────────────────
+### STATS (per-link analytics)
+### ──────────────────────────────────
+
+### Get stats for short_code 1 (should show click_count=3 after above redirects)
+GET {{baseUrl}}/stats/1
+
+### Get stats for short_code 2
+GET {{baseUrl}}/stats/2
+
+### Get stats (not found)
+GET {{baseUrl}}/stats/2
+
+### ──────────────────────────────────
+### HEALTH CHECKS
+### ──────────────────────────────────
+
+### Liveness probe
+GET {{baseUrl}}/healthCheck
+
+### Readiness probe (pings DB)
+GET {{baseUrl}}/readyCheck
