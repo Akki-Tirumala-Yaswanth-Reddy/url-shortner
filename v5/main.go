@@ -7,6 +7,7 @@ import (
 	"time"
 	"url_shortner/v5/analytics"
 	"url_shortner/v5/db"
+	"url_shortner/v5/expiration"
 	"url_shortner/v5/handlers"
 	"url_shortner/v5/middleware"
 )
@@ -25,6 +26,9 @@ func main() {
 	ana := analytics.NewAnalyticsObj()
 	// run a go routine in the background to update the visits every 1 minute
 	go analytics.StartAnalytics(ana)
+
+	// clean expired urls
+	go expiration.StartCleanExpiry()
 
 	mux := http.NewServeMux()
 	// middleware.RateLimit returns func which takes a func(http.Handler) as input
