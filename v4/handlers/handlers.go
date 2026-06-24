@@ -113,6 +113,7 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 
 		var id int64
 		if err := db.DB.QueryRow(ctx, updateOnlyQuery, shortCode).Scan(&id); err != nil {
+			// If DB does not contain this url, that means redis is corrupted, and needs to be cleaned(del the url)
 			if errors.Is(err, pgx.ErrNoRows) {
 				if delErr := db.RDB.Del(ctx, cacheKey).Err(); delErr != nil {
 					log.Println("redis del:", delErr)
@@ -132,7 +133,7 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 	if !errors.Is(err, redis.Nil) {
 		log.Println("redis get:", err)
 	}
-
+	// Click metrics handling
 	query := `
         UPDATE urls
         SET click_count = click_count + 1,
